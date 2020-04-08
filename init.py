@@ -2,6 +2,9 @@
 from flask import Flask, render_template, request, session, url_for, redirect
 import pymysql.cursors
 
+from datetime import date
+today = date.today()
+
 #Initialize the app from Flask
 app = Flask(__name__)
 
@@ -134,7 +137,7 @@ def logout():
     return redirect('/')
 
 @app.route('/post_photo_home', methods = ['GET', 'POST'])
-def post_pohto_home():
+def post_photo_home():
     return render_template('post_photo.html')
 
 @app.route('/post_photo', methods = ['GET','POST'])
@@ -146,17 +149,14 @@ def post_photo():
         private_public = 0 # means that it is checked, therefore false therefore not private, 1 == true
     else:
         private_public = 1 # not checked, automatically private
-    print(private_public)
 
     username = session["username"]
     location = request.form["location"]
-    print("how about here")
     caption = request.form["caption"]
-    print("does it work here")
     cursor = conn.cursor();
     query = "INSERT INTO Photo VALUES (LAST_INSERT_ID(),CURRENT_TIMESTAMP,%s,%s,%s,%s)"
     cursor.execute(query,(location, private_public, caption, username))
-    print("helLO")  
+
     cursor.close()
     return render_template("post_photo_finish.html")
 
@@ -164,29 +164,35 @@ def post_photo():
 def post_photo_finish():
     return render_template("home.html")
 
-@app.route("/createFriendGroup", methods=["GET", "POST"])
-@login_required
-def createFriendGroup():
-    if request.form:
-        groupName = request.form["groupName"]
-        description = request.form["description"]
-        cursor = connection.cursor()
-        # check to make sure the group Name doesn't already exist for the user 
-        query = "SELECT * FROM friendGroup WHERE groupOwner = %s\
-        AND groupName = %s"
-        cursor.execute(query, (session["username"], groupName))
-        data = cursor.fetchone()
-        if data: # bad, return error message 
-            error = f"You already have a friend group called {groupName}"
-            return render_template("createFriendGroup.html", message = error)
-        else: # good, add group into database 
-            query = "INSERT INTO friendGroup VALUES(%s,%s,%s)"
-            cursor.execute(query, (session['username'], groupName, description))
-            connection.commit()
-            flash(f"Successfully created the {groupName} friend group")
-            return redirect(url_for("createFriendGroup"))
+@app.route('/add_friend_group_home', methods = ['GET', 'POST'])
+def add_friend_group_home():
+    return render_template("friend_group.html")
 
-    return render_template("createFriendGroup.html")
+@app.route('/add_friend_group', methods = ['GET', 'POST'])
+def add_friend_group():
+    user = session["username"]
+    groupName = request.form["groupName"]
+    description = request.form["description"]
+
+    cursor = conn.cursor();
+    check = "SELECT * FROM FriendGroup WHERE groupName = %s AND groupCreator = %s"
+    cursor.execute(check, (groupName,user))
+    data = cursor.fetchone()
+    print(data)
+    error = None
+    if (data):
+        error = "This friend group already exists"
+        return render_template("friend_group.html", error = error)
+    else:
+        query = "INSERT INTO FriendGroup VALUES (%s, %s, %s)"
+        cursor.execute(query, (groupName, user, description))
+    cursor.close()
+    return render_template("post_photo_finish.html")
+
+@app.route('/add_friend_group_finish')
+def add_friend_group_finish():
+    return render_template("home.html")
+    
 '''
 @app.route('/post', methods=['GET', 'POST'])
 def post():
