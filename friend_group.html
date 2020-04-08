@@ -1,0 +1,16 @@
+<html>
+<head>
+</head>
+<body>
+<h1> Creating a friend group </h1> </br>
+<form action = "/add_friend_group" method = "POST">
+
+	<input type = "text" name = "groupName" placeholder = "enter a group name" required> </br>
+	<input type = "text" name = "description" placeholder = "enter a description"> </br>
+	<input type = "submit" value = Create />
+	{% if error %}
+		<p class="error"><strong>Error:</strong> {{error}}</p>
+	{% endif %}
+</form>
+</body>
+</html>
