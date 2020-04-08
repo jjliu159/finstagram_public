@@ -2,9 +2,6 @@
 from flask import Flask, render_template, request, session, url_for, redirect
 import pymysql.cursors
 
-from datetime import date
-today = date.today()
-
 #Initialize the app from Flask
 app = Flask(__name__)
 
@@ -157,8 +154,8 @@ def post_photo():
     caption = request.form["caption"]
     print("does it work here")
     cursor = conn.cursor();
-    query = "INSERT INTO Photo VALUES (LAST_INSERT_ID(),%s,%s,%s,%s,%s)"
-    cursor.execute(query,(today,location, private_public, caption, username))
+    query = "INSERT INTO Photo VALUES (LAST_INSERT_ID(),CURRENT_TIMESTAMP,%s,%s,%s,%s)"
+    cursor.execute(query,(location, private_public, caption, username))
     print("helLO")  
     cursor.close()
     return render_template("post_photo_finish.html")
