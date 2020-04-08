@@ -2,9 +2,6 @@
 from flask import Flask, render_template, request, session, url_for, redirect
 import pymysql.cursors
 
-from datetime import date
-today = date.today()
-
 #Initialize the app from Flask
 app = Flask(__name__)
 
@@ -95,7 +92,6 @@ def registerAuth(): #done
 @app.route('/home')
 def home():
     user = session['username']
-    print(user)
     cursor = conn.cursor();
     query = 'SELECT firstName FROM Person WHERE username = %s'
     cursor.execute(query, (user))
@@ -138,24 +134,42 @@ def logout():
 
 @app.route('/post_photo_home', methods = ['GET', 'POST'])
 def post_photo_home():
-    return render_template('post_photo.html')
+    username = session["username"]
+    cursor = conn.cursor();
+    friendGroup = "SELECT groupName FROM belongto NATURAL JOIN friendgroup WHERE username = %s or groupCreator = %s"
+    cursor.execute(friendGroup, (username,username))
+    groups = [item['groupName'] for item in cursor.fetchall()]
+    cursor.close()
+    return render_template('post_photo.html', groups=groups)
 
 @app.route('/post_photo', methods = ['GET','POST'])
 def post_photo():
     
-    public_private = 0
     if request.form.getlist("allFollowers") == ["on"]: #on = checked, off = not
         #checked -> private -> allFollowers == 0
-        private_public = 0 # means that it is checked, therefore false therefore not private, 1 == true
+        private_public = 0 # means that it is checked, therefore false therefore  private, 0 == false
     else:
-        private_public = 1 # not checked, automatically private
+        private_public = 1 # not checked, automatically public to allFollowers, 1 == true
 
     username = session["username"]
     location = request.form["location"]
     caption = request.form["caption"]
     cursor = conn.cursor();
-    query = "INSERT INTO Photo VALUES (LAST_INSERT_ID(),CURRENT_TIMESTAMP,%s,%s,%s,%s)"
+    
+    query = "INSERT INTO Photo (postingDate,filePath, allFollowers, caption, poster) VALUES (CURRENT_TIMESTAMP,%s,%s,%s,%s)"
     cursor.execute(query,(location, private_public, caption, username))
+
+    if (private_public == 0):
+        group_name_group_creator = "SELECT groupCreator,groupName FROM friendGroup NATURAL JOIN belongTo WHERE username = %s or groupCreator = %s"
+        cursor.execute(group_name_group_creator, (username,username))
+        result = cursor.fetchall()
+
+        group_selected = request.form.getlist("groups")
+        for i in range(len(group_selected)):
+            for item in result:
+                if item["groupName"] == group_selected[i]:
+                    sharing = "INSERT INTO SharedWith VALUES (LAST_INSERT_ID(),%s,%s)"
+                    cursor.execute(sharing, (group_selected[i],item["groupCreator"]))  
 
     cursor.close()
     return render_template("post_photo_finish.html")
@@ -178,7 +192,6 @@ def add_friend_group():
     check = "SELECT * FROM FriendGroup WHERE groupName = %s AND groupCreator = %s"
     cursor.execute(check, (groupName,user))
     data = cursor.fetchone()
-    print(data)
     error = None
     if (data):
         error = "This friend group already exists"
