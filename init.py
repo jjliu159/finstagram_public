@@ -166,7 +166,30 @@ def post_photo():
 @app.route('/post_photo_finish')
 def post_photo_finish():
     return render_template("home.html")
-    
+
+@app.route("/createFriendGroup", methods=["GET", "POST"])
+@login_required
+def createFriendGroup():
+    if request.form:
+        groupName = request.form["groupName"]
+        description = request.form["description"]
+        cursor = connection.cursor()
+        # check to make sure the group Name doesn't already exist for the user 
+        query = "SELECT * FROM friendGroup WHERE groupOwner = %s\
+        AND groupName = %s"
+        cursor.execute(query, (session["username"], groupName))
+        data = cursor.fetchone()
+        if data: # bad, return error message 
+            error = f"You already have a friend group called {groupName}"
+            return render_template("createFriendGroup.html", message = error)
+        else: # good, add group into database 
+            query = "INSERT INTO friendGroup VALUES(%s,%s,%s)"
+            cursor.execute(query, (session['username'], groupName, description))
+            connection.commit()
+            flash(f"Successfully created the {groupName} friend group")
+            return redirect(url_for("createFriendGroup"))
+
+    return render_template("createFriendGroup.html")
 '''
 @app.route('/post', methods=['GET', 'POST'])
 def post():
