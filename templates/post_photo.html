@@ -1,0 +1,19 @@
+<html>
+<head>
+</head>
+<body>
+<h1> Select a photo </h1> </br>
+<form action = "/post_photo" method = "POST">
+	<input type = "file" name = "location" accept = "image/png, image/jpeg"> </br>
+	<input type = "text" name = "caption" placeholder = "enter caption"></br>
+	<input type = "checkbox" name = allFollowers> Check to make it private (Note: If it's private, you can share with selected friend groups below.) </br>
+        <select name = "groups" multiple> 
+	{% for group in groups %} 
+	<option value= "{{group}}"> {{group}} </option> 
+	{% endfor %} 
+	</select> <br>
+	<input type = "submit" value = Upload /> <br>
+</form>
+<a href = "/home">Go back to main menu	</a> </br>
+</body>
+</html>	
