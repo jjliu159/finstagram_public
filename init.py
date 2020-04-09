@@ -159,7 +159,7 @@ def post_photo():
     query = "INSERT INTO Photo (postingDate,filePath, allFollowers, caption, poster) VALUES (CURRENT_TIMESTAMP,%s,%s,%s,%s)"
     cursor.execute(query,(location, private_public, caption, username))
 
-    if (private_public == 0):
+    if (private_public == 0): # if it's private
         group_name_group_creator = "SELECT groupCreator,groupName FROM friendGroup NATURAL JOIN belongTo WHERE username = %s or groupCreator = %s"
         cursor.execute(group_name_group_creator, (username,username))
         result = cursor.fetchall()
@@ -198,7 +198,9 @@ def add_friend_group():
         return render_template("friend_group.html", error = error)
     else:
         query = "INSERT INTO FriendGroup VALUES (%s, %s, %s)"
+        belong_to_query = "INSERT INTO BelongTo VALUES (%s,%s,%s)"
         cursor.execute(query, (groupName, user, description))
+        cursor.execute(belong_to_query, (user,groupName,user))
     cursor.close()
     return render_template("post_photo_finish.html")
 
