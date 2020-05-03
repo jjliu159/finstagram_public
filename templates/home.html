@@ -14,12 +14,13 @@
 <li><a href="/logout">Logout</a>
 
 </ul>
-
+<tr>
 	{% for filePath in photos%} 
-	<img src={{url_for('static', filename= filePath.filePath)}} alt={{filePath.filePath}} width="400px" height="300px">
+	<td><img src={{url_for('static', filename= filePath.filePath)}} alt={{filePath.filePath}} width="400px" height="300px"></td>
+	<td></td>
 	{% endfor %} 
 	</select> <br>
-
+</tr>
 </body>
 
 
