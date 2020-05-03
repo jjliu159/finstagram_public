@@ -1,9 +1,10 @@
 #Import Flask Library
 from flask import Flask, render_template, request, session, url_for, redirect
 import pymysql.cursors
+import os
 
 #Initialize the app from Flask
-app = Flask(__name__)
+app = Flask(__name__, static_url_path ="", static_folder ="static")
 
 #Configure MySQL
 conn = pymysql.connect(host='localhost',
@@ -112,6 +113,9 @@ def home():
     print(new_photo)
     cursor.close()
     return render_template('home.html', username=name, photos = new_photo) #posts=data)
+   
+
+
 
 @app.route('/logout')
 def logout():
