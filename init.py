@@ -4,7 +4,8 @@ import pymysql.cursors
 import os
 
 #Initialize the app from Flask
-app = Flask(__name__, static_url_path ="", static_folder ="static")
+app = Flask(__name__, static_url_path ="", static_folder ="Pictures")
+
 
 #Configure MySQL
 conn = pymysql.connect(host='localhost',
@@ -98,24 +99,50 @@ def home():
     cursor.execute(query, (user))
     data = cursor.fetchone()
     name = data["firstName"]
-    visible_photo_query = 'SELECT filePath, pID FROM Photo NATURAL JOIN follow WHERE poster = %s OR poster = followee and follower = %s'
-    cursor.execute(visible_photo_query, (user, user))
+    visible_photo_query = 'SELECT DISTINCT filePath, pID, firstName, lastName, postingDate, caption FROM Photo NATURAL JOIN follow NATURAL JOIN person WHERE poster = %s OR (follower = %s and allFollowers = 1) GROUP BY pID'
+    cursor.execute(visible_photo_query, (user,user))
     photos = [item for item in cursor.fetchall()]
     photos.reverse()
-    second_photo_query = "SELECT filePath, pID FROM sharedwith NATURAL JOIN belongto NATURAL JOIN photo WHERE username = %s or groupCreator = %s GROUP BY pID"
+    second_photo_query = "SELECT filePath, pID, firstName, lastName, postingDate, caption FROM sharedwith NATURAL JOIN belongto NATURAL JOIN person NATURAL JOIN photo WHERE username = %s or groupCreator = %s GROUP BY pID"
     cursor.execute(second_photo_query, (user,user))
     second_photos = [item for item in cursor.fetchall()]
+    print("1st list: ", photos)
+    print("2nd list: ", second_photos)
     for i in range(len(photos)):
         if photos[i] not in second_photos:
             second_photos.append(photos[i])
     new_photo = sorted(second_photos, key=lambda k: k['pID']) #order by pID reverse, since pID is a determinant of chronological order
     new_photo.reverse()
-    print(new_photo)
+    print("combined: ", new_photo)
     cursor.close()
     return render_template('home.html', username=name, photos = new_photo) #posts=data)
-   
 
+'''
+@app.route('/select_blogger')
+def select_blogger():
+    #check that user is logged in
+    #username = session['username']
+    #should throw exception if username not found
+    
+    cursor = conn.cursor();
+    query = 'SELECT DISTINCT username FROM blog'
+    cursor.execute(query)
+    data = cursor.fetchall()
+    cursor.close()
+    return render_template('select_blogger.html', user_list=data)
+'''
 
+'''
+@app.route('/show_posts', methods=["GET", "POST"])
+def show_posts():
+    poster = request.args['poster']
+    cursor = conn.cursor();
+    query = 'SELECT ts, blog_post FROM blog WHERE username = %s ORDER BY ts DESC'
+    cursor.execute(query, poster)
+    data = cursor.fetchall()
+    cursor.close()
+    return render_template('show_posts.html', poster_name=poster, posts=data)
+'''
 
 @app.route('/logout')
 def logout():
@@ -172,14 +199,21 @@ def post_photo_finish():
 def add_friend_group_home():
     username = session["username"]
     cursor = conn.cursor();
+
+    #show all groups that user created
+    user_group = "SELECT groupName FROM friendgroup WHERE groupCreator = %s"
+    cursor.execute(user_group, (username))
+    personal_group = [item['groupName'] for item in cursor.fetchall()]
+
+    #
     friendGroup = "SELECT groupName FROM belongto NATURAL JOIN friendgroup WHERE username = %s or groupCreator = %s"
     cursor.execute(friendGroup, (username,username))
     groups = [item['groupName'] for item in cursor.fetchall()]
     cursor.close()
-    return render_template("friend_group.html", groups=groups)
+    return render_template("friend_group.html", groups=groups, personal_group=personal_group)
 
 @app.route('/add_friend_group', methods = ['GET', 'POST'])
-def add_friend_group():
+def add_friend_group():  
     user = session["username"]
     groupName = request.form["groupName"]
     description = request.form["description"]
@@ -200,16 +234,41 @@ def add_friend_group():
     cursor.close()
     return render_template("post_photo_finish.html")
 
+@app.route('/add_friend', methods = ['GET', 'POST']) #done
+def add_friend():
+    cursor = conn.cursor();
+    user = session["username"]
+    username = request.form["username"]
+    group_selected = request.form.getlist("personal_group")
+    print(group_selected)
+
+    for i in range(len(group_selected)):
+        add = "INSERT INTO belongto (username,groupName,groupCreator) VALUES (%s, %s, %s)"
+        cursor.execute(add,(username,group_selected[i], user))
+    cursor.close()
+    return render_template("post_photo_finish.html")
+    
+
+'''
 @app.route('/leave_friend_group', methods = ['GET', 'POST'])
 def leave_friend_group():
+    user = session["username"]
     cursor = conn.cursor();
+
+    #grab all groups that user created to check later on
+    creator_check = "SELECT groupCreator FROM friendgroup WHERE groupCreator = %s"
+    cursor.execute(creator_check,(user))
+    creator_groups = cursor.fetchall()
+
+    
     group_selected = request.form.getlist("groups")
     for i in range(len(group_selected)):
-        for item in result:
-            if item["groupName"] == group_selected[i]:
-                sharing = "INSERT INTO SharedWith VALUES (LAST_INSERT_ID(),%s,%s)"
-                cursor.execute(sharing, (group_selected[i],item["groupCreator"])) 
+        if group_selected in creator_groups:
+            belongto_delete = "DELETE FROM belongto WHERE groupCreator = %s"
+            cursor.execute(belongto_delete, (user))
+            
     return render_template("post_photo_finish.html")
+'''
 
 '''
 @app.route('/add_friend_group_finish') #dont know if i need this
@@ -255,20 +314,33 @@ def unfollow():
 def followers_home():
     user = session["username"]
     cursor = conn.cursor();
-    following_query = "SELECT DISTINCT follower FROM follow WHERE followStatus = 0 AND followee = %s"
+    following_query = "SELECT DISTINCT follower FROM follow WHERE followStatus = 0 AND followee = %s" #displays non follower
     cursor.execute(following_query, (user))
     followers = [item['follower'] for item in cursor.fetchall()]
+    current_followers_query = "SELECT DISTINCT follower FROM follow WHERE followStatus = 1 AND followee = %s" #displays followers
+    cursor.execute(current_followers_query, (user))
+    current_followers = [item['follower'] for item in cursor.fetchall()]
     cursor.close()      
-    return render_template("followers.html", followers = followers)
+    return render_template("followers.html", followers = followers, current_followers = current_followers)
 
 @app.route('/follower', methods = ['GET', 'POST'])
 def followers():
     user = session["username"]
     followers = request.form.getlist("followers")
-    print(followers)
     cursor = conn.cursor();
     for i in range(len(followers)):
         update = "UPDATE follow SET followStatus = 1 WHERE followee = %s AND follower = %s"
+        cursor.execute(update,(user,followers[i]))
+    cursor.close();
+    return render_template("post_photo_finish.html")
+
+@app.route('/remove_follower', methods = ['GET', 'POST'])
+def remove_followers():
+    user = session["username"]
+    followers = request.form.getlist("followers")
+    cursor = conn.cursor();
+    for i in range(len(followers)):
+        update = "DELETE FROM follow WHERE followee = %s AND follower = %s"
         cursor.execute(update,(user,followers[i]))
     cursor.close();
     return render_template("post_photo_finish.html")
