@@ -113,6 +113,13 @@ def select_blogger():
     data = cursor.fetchall()
     cursor.close()
     return render_template('select_blogger.html', user_list=data)
+
+@app.route('/imageInformation')
+    def imageInfo():
+    imageInfo = "SELECT * FROM photo WHERE photoID = %s"
+    with connection.cursor() as cursor:
+        cursor.execute(imageInfo, photoID)
+    return cursor.fetchone()
 '''
 
 '''
