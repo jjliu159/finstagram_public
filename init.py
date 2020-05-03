@@ -97,11 +97,11 @@ def home():
     cursor.execute(query, (user))
     data = cursor.fetchone()
     name = data["firstName"]
-    visible_photo_query = 'SELECT pID FROM Photo NATURAL JOIN follow WHERE poster = %s OR poster = followee and follower = %s'
+    visible_photo_query = 'SELECT filePath, pID FROM Photo NATURAL JOIN follow WHERE poster = %s OR poster = followee and follower = %s'
     cursor.execute(visible_photo_query, (user, user))
     photos = [item for item in cursor.fetchall()]
     photos.reverse()
-    second_photo_query = "SELECT pID FROM sharedwith NATURAL JOIN belongto WHERE username = %s or groupCreator = %s GROUP BY pID"
+    second_photo_query = "SELECT filePath, pID FROM sharedwith NATURAL JOIN belongto NATURAL JOIN photo WHERE username = %s or groupCreator = %s GROUP BY pID"
     cursor.execute(second_photo_query, (user,user))
     second_photos = [item for item in cursor.fetchall()]
     for i in range(len(photos)):
