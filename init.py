@@ -97,7 +97,7 @@ def home():
     cursor.execute(query, (user))
     data = cursor.fetchone()
     name = data["firstName"]
-    visible_photo_query = 'SELECT pID FROM Photo WHERE poster = %s'
+    visible_photo_query = 'SELECT pID FROM Photo WHERE poster = %s OR poster = followee and follower = %s'
     cursor.execute(visible_photo_query, (user))
     photos = [item for item in cursor.fetchall()]
     photos.reverse()
