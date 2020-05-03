@@ -6,7 +6,7 @@
 
 
 	{% for filePath in photos%} 
-	<img src={{filePath.filePath}} alt={{filePath.filePath}} width="400px" height="300px">
+	<img src={{url_for('static', filename= filePath.filePath)}} alt={{filePath.filePath}} width="400px" height="300px">
 	{% endfor %} 
 	</select> <br>
 
