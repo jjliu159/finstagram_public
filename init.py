@@ -114,6 +114,7 @@ def select_blogger():
     cursor.close()
     return render_template('select_blogger.html', user_list=data)
 '''
+'''
 @app.route("/unFollow")
 def unFollow():
     try:
@@ -133,7 +134,7 @@ def unFollow():
         cursor.execute(imageInfo, photoID)
     return cursor.fetchone()
 
-
+'''
 '''
 @app.route('/show_posts', methods=["GET", "POST"])
 def show_posts():
