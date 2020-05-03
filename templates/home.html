@@ -15,16 +15,25 @@
 
 </ul>
 <table>
-<tr>
 	{% for filePath in photos%} 
+	<tr>
+	<td>{{filePath.firstName}} {{filePath.lastName}}	</td>
+	</tr>
+	<tr>
+	<td>{{filePath.postingDate}} </td>
+	</tr>
+	<tr>
 	<td><img src={{url_for('static', filename= filePath.filePath)}} alt={{filePath.filePath}} width="400px" height="300px"></td>
-	<td>{{filepath.caption}}</td>
+	</tr>
+	<tr>
+	<td>{{filePath.caption}} </td>
+	</tr>
+	<br>
+	</br>
 	{% endfor %} 
 	</select> <br>
-</tr>
 </table>
 </body>
 
 
 </html>
-
