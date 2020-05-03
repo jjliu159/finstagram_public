@@ -4,10 +4,20 @@
 <body>
 	<h1>Welcome {{username}}!</h1> 
 
-<a href = "/post_photo_home"> Upload an image </a> </br>
-<a href = "/add_friend_group_home"> Add a friend group </a> </br>
+	{% for photo in photos%} 
+	<option value= "{{photo}}"> {{photo}} </option> 
+	{% endfor %} 
+	</select> <br>
 
-<a href="/logout">Logout</a>
+<ul>
+
+<li><a href = "/post_photo_home"> Upload an image </a> </br></li>
+<li><a href = "/add_friend_group_home"> Manage friend group </a> </br></li>
+<li><a href = "/follow_home"> Manage follows</a> </br></li>
+<li><a href = "/follower_home"> Manage followers </a> </br></li>
+<li><a href="/logout">Logout</a>
+
+</ul>
 
 </body>
 
