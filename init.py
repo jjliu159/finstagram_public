@@ -114,6 +114,18 @@ def select_blogger():
     cursor.close()
     return render_template('select_blogger.html', user_list=data)
 '''
+@app.route("/unFollow")
+def unFollow():
+    try:
+        username = session['username']
+    except:
+        return render_template('index.html')
+    cursor=conn.cursor()
+    query="DELETE FROM FOLLOW where follower=%s and followee=%s"
+    cursor.execute(query,(username,toAccept))
+    cursor.close()
+    return redirect(url_for('manageFollowee'))
+
 @app.route('/imageInformation')
     def imageInfo():
     imageInfo = "SELECT * FROM photo WHERE photoID = %s"
