@@ -1,0 +1,18 @@
+<html>
+<head>
+</head>
+<body>
+<h1> Managing followers </h1> </br>
+<form action = "/follower" method = "POST">
+
+	<select name = "followers" multiple> 
+	{% for follower in followers%} 
+	<option value= "{{follower }}"> {{follower}} </option> 
+	{% endfor %} 
+	</select> <br>
+	<input type = "submit" value = Accept fo/> <br>
+
+</form>
+<a href = "/home"> Go back to main menu	</a> </br>
+</body>
+</html>

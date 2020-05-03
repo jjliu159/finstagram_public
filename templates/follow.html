@@ -1,0 +1,25 @@
+<html>
+<head>
+</head>
+<body>
+<h1> Follow someone! </h1></br>
+<form action = "/follow" method = "POST">
+
+	<input type = "text" name = "username" placeholder = "enter a username" required> </br>
+	<input type = "submit" value = Request />
+
+</form>
+<h1> Currenty following </h1></br>
+<form action = "/unfollow" method = "POST">
+
+	<select name = "following" multiple> 
+	{% for follow in following %} 
+	<option value= "{{follow }}"> {{follow }} </option> 
+	{% endfor %} 
+	</select> <br>
+	<input type = "submit" value = Unfollow /> <br>
+
+</form>
+<a href = "/home"> Go back to main menu	</a> </br>
+</body>
+</html>

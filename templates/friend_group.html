@@ -8,10 +8,22 @@
 	<input type = "text" name = "groupName" placeholder = "enter a group name" required> </br>
 	<input type = "text" name = "description" placeholder = "enter a description"> </br>
 	<input type = "submit" value = Create />
-	{% if error %}
-		<p class="error"><strong>Error:</strong> {{error}}</p>
-	{% endif %}
+
 </form>
-<a href = "/home">Go back to main menu	</a> </br>
+
+<h1> Leave a friend group </h1> </br>
+
+<form action = "/leave_friend_group" method = "POST">
+
+	<select name = "groups" multiple> 	
+	{% for group in groups %} 
+	<option value= "{{group}}"> {{group}} </option> 
+	{% endfor %} 
+	</select> <br>
+	<input type = "submit" value = Leave /> <br>
+
+</form>
+
+<a href = "/home"> Go back to main menu	</a> </br>
 </body>
 </html>
