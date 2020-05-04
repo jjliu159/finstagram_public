@@ -384,6 +384,35 @@ def remove_followers():
         cursor.execute(update,(user,followers[i]))
     cursor.close()
     return render_template("post_photo_finish.html")
+  
+@app.route("/block")
+def block():
+    try:
+        username = session['username']
+    except:
+        return render_template('index.html')
+    
+    blocking = request.args['blocking']
+    cursor=conn.cursor()
+    query="INSERT INTO finstagram.block(blocker,blockee) VALUES(%s,%s)"
+    cursor.execute(query,(username,blocking))
+    conn.commit()
+    cursor.close()
+    # print(username,toblock)
+    return redirect(url_for('manageBlock'))
+  
+@app.route("/manageBlock")
+def manageBlock():
+    try:
+        username = session['username']
+    except:
+        return render_template('index.html')
+    cursor=conn.cursor()
+    query="SELECT username From (SELECT blockee FROM block WHERE blocker = %s) AS notseen RIGHT JOIN Person on notseen.blockee = Person.username WHERE blockee is Null and username != %s"
+    cursor.execute(query,(username,username))
+    data=cursor.fetchall()
+    cursor.close()
+    return render_template("block.html",persons=data)
 
 @app.route('/delete_account')
 def delete_account():
