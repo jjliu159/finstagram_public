@@ -1,0 +1,30 @@
+<html>
+<head>
+</head>
+<body>
+
+Select someone to block.
+Think it over, you cannot undo this action.
+<br>
+
+<form action="/block" method="GET">
+
+
+    {% for line in persons %}
+    <input type="radio" name="blocking" value={{line.username}}>{{line.username}}</input>
+        <br>
+    {% endfor %}
+
+    <input type="submit" value="block">
+
+</form>
+
+
+<a href="/home">Home</a>
+<br>
+<a href="/logout">Logout</a>
+
+</body>
+
+
+</html>
