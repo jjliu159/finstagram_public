@@ -99,12 +99,16 @@ def home():
     cursor.execute(query, (user))
     data = cursor.fetchone()
     name = data["firstName"]
-    visible_photo_query = 'SELECT DISTINCT filePath, pID, firstName, lastName, postingDate, caption FROM Photo NATURAL JOIN follow NATURAL JOIN person WHERE poster = %s OR (follower = %s and allFollowers = 1) GROUP BY pID'
+
+    #get photo of all people user followed
+    visible_photo_query = 'SELECT filePath, pID, firstName, lastName, postingDate, caption FROM follow NATURAL join photo NATURAL JOIN person WHERE pID IN (SELECT pID FROM follow NATURAL JOIN photo WHERE follower = %s AND poster = followee AND username = poster AND followstatus = 1) OR pID IN (SELECT pID FROM photo WHERE poster = %s AND poster = username AND followee = poster) GROUP BY pID'
     cursor.execute(visible_photo_query, (user,user))
     photos = [item for item in cursor.fetchall()]
     photos.reverse()
-    second_photo_query = "SELECT filePath, pID, firstName, lastName, postingDate, caption FROM sharedwith NATURAL JOIN belongto NATURAL JOIN person NATURAL JOIN photo WHERE username = %s or groupCreator = %s GROUP BY pID"
-    cursor.execute(second_photo_query, (user,user))
+
+    #get photo of everything shared
+    second_photo_query = "SELECT filePath, pID, firstName, lastName, postingDate, caption FROM sharedwith AS s NATURAL JOIN belongto AS b NATURAL JOIN photo JOIN person AS p ON (p.username = s.groupCreator) WHERE b.username = %s"
+    cursor.execute(second_photo_query, (user))
     second_photos = [item for item in cursor.fetchall()]
     print("1st list: ", photos)
     print("2nd list: ", second_photos)
@@ -364,3 +368,4 @@ app.secret_key = 'some key that you will never guess'
 #for changes to go through, TURN OFF FOR PRODUCTION
 if __name__ == "__main__":
     app.run('127.0.0.1', 5000, debug = False)
+
