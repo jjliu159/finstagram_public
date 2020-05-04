@@ -349,6 +349,29 @@ def remove_followers():
     cursor.close();
     return render_template("post_photo_finish.html")
 
+@app.route('/delete_account')
+def delete_account():
+    user = session['username']
+    cursor = conn.cursor();
+    person = "DELETE FROM person WHERE username = %s"
+    cursor.execute(person, user)
+    photo = "DELETE FROM photo WHERE poster = %s"
+    cursor.execute(photo, user)
+    fgs = "DELETE FROM friendgroup WHERE groupCreator = %s"
+    cursor.execute(fgs, user)
+    belongto = "DELETE FROM belongto WHERE username = %s"
+    cursor.execute(belongto, user)
+    follow = "DELETE FROM follow WHERE follower = %s or followee = %s"
+    cursor.execute(follow, (user,user))
+    reactto = "DELETE FROM reactto WHERE username = %s"
+    cursor.execute(reactto, user)
+    sharedwith = "DELETE FROM sharedwith WHERE groupCreator = %s"
+    cursor.execute(sharedwith, user)
+    tag = "DELETE FROM tag WHERE username = %s"
+    cursor.execute(tag, user)
+    cursor.close()
+    return render_template('index.html')
+  
 '''
 @app.route('/post', methods=['GET', 'POST'])
 def post():
