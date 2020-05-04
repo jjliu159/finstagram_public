@@ -11,13 +11,28 @@
 
 </form>
 
+
+<h1> Add a friend to your group </h1> </br>
+
+<form action = "/add_friend" method = "POST">
+
+	<input type = "text" name = "username" placeholder = "enter a username" required> </br>
+	<select name = "personal_group" multiple> 	
+	{% for group in personal_group%} 
+	<option value= "{{group}}"> {{group}} </option> 
+	{% endfor %} 
+	</select> <br>
+	<input type = "submit" value = Add />
+
+</form>
+
 <h1> Leave a friend group </h1> </br>
 
 <form action = "/leave_friend_group" method = "POST">
 
 	<select name = "groups" multiple> 	
 	{% for group in groups %} 
-	<option value= "{{group}}"> {{group}} </option> 
+	<option value= "{{group}}"> {{group.groupName}},{{group.groupCreator}}</option> 
 	{% endfor %} 
 	</select> <br>
 	<input type = "submit" value = Leave /> <br>
