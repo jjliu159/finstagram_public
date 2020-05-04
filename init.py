@@ -93,6 +93,7 @@ def registerAuth(): #done
 
 @app.route('/home')
 def home():
+    
     user = session['username']
     cursor = conn.cursor();
     query = 'SELECT firstName FROM Person WHERE username = %s'
@@ -110,43 +111,62 @@ def home():
     second_photo_query = "SELECT filePath, pID, firstName, lastName, postingDate, caption FROM sharedwith AS s NATURAL JOIN belongto AS b NATURAL JOIN photo JOIN person AS p ON (p.username = s.groupCreator) WHERE b.username = %s"
     cursor.execute(second_photo_query, (user))
     second_photos = [item for item in cursor.fetchall()]
-    print("1st list: ", photos)
-    print("2nd list: ", second_photos)
+
+    #combine list
     for i in range(len(photos)):
         if photos[i] not in second_photos:
             second_photos.append(photos[i])
     new_photo = sorted(second_photos, key=lambda k: k['pID']) #order by pID reverse, since pID is a determinant of chronological order
     new_photo.reverse()
-    print("combined: ", new_photo)
-    cursor.close()
-    return render_template('home.html', username=name, photos = new_photo) #posts=data)
 
-'''
-@app.route('/select_blogger')
-def select_blogger():
-    #check that user is logged in
-    #username = session['username']
-    #should throw exception if username not found
-    
-    cursor = conn.cursor();
-    query = 'SELECT DISTINCT username FROM blog'
-    cursor.execute(query)
-    data = cursor.fetchall()
-    cursor.close()
-    return render_template('select_blogger.html', user_list=data)
-'''
+    tag = "SELECT username,pID FROM tag WHERE pID = %s AND tagStatus = 1"
 
-'''
-@app.route('/show_posts', methods=["GET", "POST"])
-def show_posts():
-    poster = request.args['poster']
-    cursor = conn.cursor();
-    query = 'SELECT ts, blog_post FROM blog WHERE username = %s ORDER BY ts DESC'
-    cursor.execute(query, poster)
-    data = cursor.fetchall()
+    tags = []
+
+    #find all photos with tagged in the list of combined photos
+    for item in new_photo:
+        #adding a tag to the dic to prepare for tag append later
+        item["tag"] = []
+        cursor.execute(tag,(item["pID"]))
+        if tags == []:
+            tags = [item for item in cursor.fetchall()]
+        else:
+            tags += [item for item in cursor.fetchall()]
+
+    #appending tag
+    for item in new_photo:
+        for item_2 in tags:
+            if item["pID"] == item_2["pID"]:
+                item["tag"].append(item_2["username"])
+
+    heart_reac = "SELECT username,pID,emoji, comment FROM reactto WHERE pID = %s"
+
+    reacts = []
+
+    for item in new_photo:
+        #adding a tag to the dic to prepare for tag append later
+        item["react"] = []
+        cursor.execute(heart_reac,(item["pID"]))
+        if reacts == []:
+            reacts = [item for item in cursor.fetchall()]
+        else:
+            reacts += [item for item in cursor.fetchall()]
+
+    #find all photos with reactto
+    for item in new_photo:
+        for item_2 in reacts:
+            if item["pID"] == item_2["pID"]:
+                item["react"].append(item_2["username"])
+                if not item_2["emoji"]:
+                    item["react"].append("")
+                else:
+                    item["react"].append(item_2["emoji"])
+                if not item_2["comment"]:
+                    item["react"].append("")
+                else:
+                    item["react"].append(item_2["comment"])
     cursor.close()
-    return render_template('show_posts.html', poster_name=poster, posts=data)
-'''
+    return render_template('home.html', username=name, photos = new_photo)
 
 @app.route('/logout')
 def logout():
@@ -209,10 +229,11 @@ def add_friend_group_home():
     cursor.execute(user_group, (username))
     personal_group = [item['groupName'] for item in cursor.fetchall()]
 
-    #
-    friendGroup = "SELECT groupName FROM belongto NATURAL JOIN friendgroup WHERE username = %s or groupCreator = %s"
+    #select all group to be leaving on later, whether it's user's group or someone added user to it
+    friendGroup = "SELECT DISTINCT groupName, groupCreator FROM belongto NATURAL JOIN friendgroup WHERE username = %s or groupCreator = %s"
     cursor.execute(friendGroup, (username,username))
-    groups = [item['groupName'] for item in cursor.fetchall()]
+    groups = cursor.fetchall() #item['groupName'] for item in cursor.fetchall()]
+
     cursor.close()
     return render_template("friend_group.html", groups=groups, personal_group=personal_group)
 
@@ -244,7 +265,6 @@ def add_friend():
     user = session["username"]
     username = request.form["username"]
     group_selected = request.form.getlist("personal_group")
-    print(group_selected)
 
     for i in range(len(group_selected)):
         add = "INSERT INTO belongto (username,groupName,groupCreator) VALUES (%s, %s, %s)"
@@ -252,27 +272,43 @@ def add_friend():
     cursor.close()
     return render_template("post_photo_finish.html")
     
-
-'''
 @app.route('/leave_friend_group', methods = ['GET', 'POST'])
 def leave_friend_group():
     user = session["username"]
     cursor = conn.cursor();
 
     #grab all groups that user created to check later on
-    creator_check = "SELECT groupCreator FROM friendgroup WHERE groupCreator = %s"
+    creator_check = "SELECT groupName, groupCreator FROM friendgroup WHERE groupCreator = %s"
     cursor.execute(creator_check,(user))
     creator_groups = cursor.fetchall()
 
-    
+    #grabbing the group selected and converting them from string dic to actual dic using json
     group_selected = request.form.getlist("groups")
     for i in range(len(group_selected)):
-        if group_selected in creator_groups:
-            belongto_delete = "DELETE FROM belongto WHERE groupCreator = %s"
-            cursor.execute(belongto_delete, (user))
-            
+        json_acceptable_string = group_selected[i].replace("'", "\"")
+        group_selected[i] = json.loads(json_acceptable_string)
+
+    #query to be used later
+    leave_group = "DELETE FROM belongto WHERE userName = %s AND groupName = %s"
+    belongto_delete = "DELETE FROM belongto WHERE groupCreator = %s AND groupName = %s"
+    sharedwith_delete = "DELETE FROM sharedwith WHERE groupCreator = %s AND groupName = %s"
+    friendgroup_delete = "DELETE FROM friendgroup WHERE groupCreator = %s AND groupName = %s"
+    
+    for item in group_selected:
+        #check to see if he's deleting his own created group
+        if item in creator_groups: 
+            cursor.execute(belongto_delete, (user,item["groupName"])) 
+            cursor.execute(sharedwith_delete, (user,item["groupName"])) #delete by groupCreator
+            cursor.execute(friendgroup_delete, (user,item["groupName"]))
+
+        #else
+        else:
+            cursor.execute(leave_group, (user,item["groupName"]))
+
+    cursor.close()
     return render_template("post_photo_finish.html")
-'''
+
+
 
 '''
 @app.route('/add_friend_group_finish') #dont know if i need this
@@ -311,7 +347,7 @@ def unfollow():
     for i in range(len(following_selected)):
         remove = "DELETE FROM Follow WHERE follower = %s AND followee = %s"
         cursor.execute(remove,(user,following_selected[i]))
-    cursor.close();
+    cursor.close()
     return render_template("post_photo_finish.html")
 
 @app.route('/follower_home', methods = ['GET', 'POST'])
@@ -346,7 +382,7 @@ def remove_followers():
     for i in range(len(followers)):
         update = "DELETE FROM follow WHERE followee = %s AND follower = %s"
         cursor.execute(update,(user,followers[i]))
-    cursor.close();
+    cursor.close()
     return render_template("post_photo_finish.html")
 
 @app.route('/delete_account')
@@ -371,19 +407,6 @@ def delete_account():
     cursor.execute(tag, user)
     cursor.close()
     return render_template('index.html')
-  
-'''
-@app.route('/post', methods=['GET', 'POST'])
-def post():
-    username = session['username']
-    cursor = conn.cursor();
-    blog = request.form['blog']
-    query = 'INSERT INTO blog (blog_post, username) VALUES(%s, %s)'
-    cursor.execute(query, (blog, username))
-    conn.commit()
-    cursor.close()
-    return redirect(url_for('home'))
-'''
         
 app.secret_key = 'some key that you will never guess'
 #Run the app on localhost port 5000
@@ -391,4 +414,3 @@ app.secret_key = 'some key that you will never guess'
 #for changes to go through, TURN OFF FOR PRODUCTION
 if __name__ == "__main__":
     app.run('127.0.0.1', 5000, debug = False)
-
