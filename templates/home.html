@@ -26,8 +26,7 @@
 	<td><img src={{url_for('static', filename= filePath.filePath)}} alt={{filePath.filePath}} width="400px" height="300px"></td>
 	</tr>
 	<tr>
-	<td>{{filePath.caption}} <br>
-	</br><br></br>
+	<td>{{filePath.caption}} 
 	</td>
 	</tr>
 	
@@ -48,6 +47,8 @@
 	{% for react in filePath.react %}
 	<td>
 	{{react}}
+		<br>
+	</br><br></br>
 	</td>
 	{% endfor %}
 	</tr>
