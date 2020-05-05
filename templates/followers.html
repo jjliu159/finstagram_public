@@ -13,6 +13,20 @@
 	<input type = "submit" value = Accept fo/> <br>
 
 </form>
+
+<h1> Current Followers </h1> </br>
+
+<form action = "/remove_follower" method = "POST">
+
+	<select name = "followers" multiple> 
+	{% for follower in current_followers%} 
+	<option value= "{{follower }}"> {{follower}} </option> 
+	{% endfor %} 
+	</select> <br>
+	<input type = "submit" value = Remove /> <br>
+
+</form>
+
 <a href = "/home"> Go back to main menu	</a> </br>
 </body>
 </html>
