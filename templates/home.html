@@ -26,10 +26,8 @@
 	<td><img src={{url_for('static', filename= filePath.filePath)}} alt={{filePath.filePath}} width="400px" height="300px"></td>
 	</tr>
 	<tr>
-	<td>{{filePath.caption}} 
-	</td>
+	<td>{{filePath.caption}} </td>
 	</tr>
-	
 	<tr>
 	<td>
 	Tagged:
@@ -47,20 +45,15 @@
 	{% for react in filePath.react %}
 	<td>
 	{{react}}
-		
 	</td>
 	{% endfor %}
 	</tr>
-	<td>
-	<br></br>
-	<br></br>
-	</td>
 	{% endfor %} 
 	</select> <br>
 </table>
 
-
 <a href="/delete_account">Deactivate Account</a>
+
 </body>
 
 
