@@ -4,7 +4,7 @@ import pymysql.cursors
 import os
 
 #Initialize the app from Flask
-app = Flask(__name__, static_url_path ="", static_folder ="Pictures")
+app = Flask(__name__, static_url_path ="", static_folder ="static")
 
 
 #Configure MySQL
