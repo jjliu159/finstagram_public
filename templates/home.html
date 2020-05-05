@@ -31,6 +31,26 @@
 	</td>
 	</tr>
 	
+	<tr>
+	<td>
+	Tagged:
+	</td>
+	{% for tag in filePath.tag %}
+	<td>
+	{{tag}}
+	</td>
+	{% endfor %}
+	</tr>
+	<tr>
+	<td>
+	Reactions:
+	</td>
+	{% for react in filePath.react %}
+	<td>
+	{{react}}
+	</td>
+	{% endfor %}
+	</tr>
 	{% endfor %} 
 	</select> <br>
 </table>
