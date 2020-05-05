@@ -408,7 +408,7 @@ def manageBlock():
     except:
         return render_template('index.html')
     cursor=conn.cursor()
-    query="SELECT username From (SELECT blockee FROM block WHERE blocker = %s) AS notseen RIGHT JOIN Person on notseen.blockee = Person.username WHERE blockee is Null and username != %s"
+    query="SELECT username From (SELECT blockee FROM block WHERE blocker = %s) AS block RIGHT JOIN Person on block.blockee = Person.username WHERE blockee is Null and username != %s"
     cursor.execute(query,(username,username))
     data=cursor.fetchall()
     cursor.close()
